@@ -1,0 +1,25 @@
+.App {
+  min-height: 100vh;
+  background-color: #0a0d0a;
+}
+
+::selection {
+  background: rgba(122, 139, 66, 0.35);
+  color: #fff;
+}
+
+/* Custom scrollbar for dark military theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0d0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border: 2px solid #0a0d0a;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #7a8b42;
+}
