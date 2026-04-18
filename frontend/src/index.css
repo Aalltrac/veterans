@@ -14,19 +14,19 @@ body,
 
 body {
   margin: 0;
-  font-family: \"Chivo\", system-ui, sans-serif;
+  font-family: "Chivo", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 .font-rajdhani {
-  font-family: \"Rajdhani\", sans-serif;
+  font-family: "Rajdhani", sans-serif;
 }
 .font-chivo {
-  font-family: \"Chivo\", sans-serif;
+  font-family: "Chivo", sans-serif;
 }
 .font-jetbrains {
-  font-family: \"JetBrains Mono\", monospace;
+  font-family: "JetBrains Mono", monospace;
 }
 
 @layer base {
@@ -64,7 +64,7 @@ body {
 }
 
 @layer base {
-  [data-debug-wrapper=\"true\"] {
+  [data-debug-wrapper="true"] {
     display: contents !important;
   }
 }
