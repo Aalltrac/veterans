@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { collection, doc, onSnapshot, setDoc } from "firebase/firestore";
 import {
   Save,
@@ -25,7 +25,6 @@ import {
   Gauge,
   CheckCircle2,
   Share2,
-  Copy,
   Check,
   Sparkles,
   Rocket,
@@ -482,7 +481,10 @@ export default function EvaPass() {
           ? "#E6B955"
           : "#C3DC5C";
 
-  const myHistory = Array.isArray(myPass?.history) ? myPass.history : [];
+  const myHistory = useMemo(
+    () => (Array.isArray(myPass?.history) ? myPass.history : []),
+    [myPass?.history]
+  );
 
   /* Sparkline data (chronological: oldest → newest) */
   const sparkSeries = useMemo(() => {
