@@ -246,8 +246,9 @@ export default function Login() {
     }
   };
 
-  const utcTime = clock.toISOString().slice(11, 19);
-  const utcDate = clock.toISOString().slice(0, 10);
+  const utcPlus2 = new Date(clock.getTime() + 2 * 60 * 60 * 1000);
+  const utcTime = utcPlus2.toISOString().slice(11, 19);
+  const utcDate = utcPlus2.toISOString().slice(0, 10);
 
   const steps = ["Idle", "Handshake", "Token", "Granted"];
 
@@ -332,7 +333,7 @@ export default function Login() {
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="hidden sm:inline">UTC {utcDate}</span>
+          <span className="hidden sm:inline">UTC+2 {utcDate}</span>
           <span className="text-[#7A8B42]" data-testid="login-clock">
             {utcTime}
           </span>
