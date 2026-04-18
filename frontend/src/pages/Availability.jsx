@@ -20,7 +20,6 @@ import {
   Copy,
   Check,
   Target,
-  Activity,
   TrendingUp,
   Trophy,
   Calendar,
@@ -470,7 +469,7 @@ export default function Availability() {
     return d.toDateString() === now.toDateString();
   });
   const currentSlotIndex = useMemo(() => {
-    const h = now.getUTCHours();
+    const h = new Date(nowTick).getUTCHours();
     return TIME_SLOTS.findIndex((s) => Number((s.label || "").split(":")[0]) === h);
   }, [nowTick]);
 
