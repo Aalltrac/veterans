@@ -1,0 +1,112 @@
+{
+  "theme": "dark",
+  "archetype": "Archetype 2: The Performance Pro (Military Esports Variant)",
+  "typography": {
+    "headings": {
+      "family": "Rajdhani, sans-serif",
+      "weights": [500, 600, 700],
+      "usage": "Page titles, section headers, prominent numbers, buttons."
+    },
+    "body": {
+      "family": "Chivo, sans-serif",
+      "weights": [400, 500, 700],
+      "usage": "Standard UI text, descriptions, standard labels."
+    },
+    "data": {
+      "family": "JetBrains Mono, monospace",
+      "weights": [400, 500, 700],
+      "usage": "Time slots (e.g. 00:40), tokens remaining, dates, and grid data."
+    }
+  },
+  "colors": {
+    "background": {
+      "main": "#0A0D0A",
+      "surface": "#141A14",
+      "surface_elevated": "#1B221B"
+    },
+    "primary": {
+      "base": "#7A8B42",
+      "hover": "#8C9E4D",
+      "neon": "#A3C139"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A1A1AA",
+      "muted": "#52525B"
+    },
+    "borders": {
+      "default": "#27272A",
+      "focus": "#7A8B42",
+      "grid": "#1F2937"
+    },
+    "semantic": {
+      "planning_sessions": {
+        "mixte": "bg-cyan-900/40 text-cyan-400 border-cyan-500/50",
+        "scrim": "bg-red-900/40 text-red-400 border-red-500/50",
+        "is": "bg-purple-900/40 text-purple-400 border-purple-500/50",
+        "ligue_locale": "bg-amber-900/40 text-amber-400 border-amber-500/50",
+        "coaching": "bg-blue-900/40 text-blue-400 border-blue-500/50",
+        "tournois": "bg-orange-900/40 text-orange-400 border-orange-500/50",
+        "evenement": "bg-pink-900/40 text-pink-400 border-pink-500/50"
+      },
+      "availability": {
+        "disponible": "bg-[#7A8B42]/20 text-[#A3C139] border-[#7A8B42]/50",
+        "indisponible": "bg-red-900/40 text-red-400 border-red-500/50",
+        "incertain": "bg-amber-900/40 text-amber-400 border-amber-500/50"
+      }
+    }
+  },
+  "layout": {
+    "density": "high",
+    "grid_planning_and_availability": {
+      "structure": "Grid of 36 rows (time slots) x 7 columns (Monday - Sunday)",
+      "time_intervals": "40-minute increments starting at 00:00 (00:00, 00:40, 01:20, 02:00, 02:40, etc., up to 23:20)",
+      "time_column": "Sticky left column (`sticky left-0 z-20`) showing times.",
+      "header_row": "Sticky top row (`sticky top-0 z-30`) showing days of the week + week navigation (prev/next).",
+      "cell_style": "Compact density (`h-10` or `h-12` minimum height). Technical grid look using `border-r border-b border-[#1F2937]`. Must include hover state (`hover:bg-[#1B221B]`)."
+    },
+    "navigation": {
+      "style": "Top header with user info, current week toggle, and logout.",
+      "glassmorphism": "backdrop-blur-md bg-[#0A0D0A]/80 border-b border-[#27272A]"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#7A8B42] text-white hover:bg-[#8C9E4D] rounded-sm font-rajdhani uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(122,139,66,0.15)]",
+      "outline": "border border-[#7A8B42] text-[#A3C139] hover:bg-[#7A8B42]/10 rounded-sm font-rajdhani uppercase tracking-wider",
+      "ghost": "text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-sm"
+    },
+    "cards": {
+      "style": "bg-[#141A14] border border-[#27272A] rounded-sm shadow-xl"
+    },
+    "inputs": {
+      "style": "bg-[#0A0D0A] border border-[#27272A] text-white focus:border-[#7A8B42] focus:ring-1 focus:ring-[#7A8B42] rounded-sm font-chivo placeholder-zinc-600",
+      "select": "bg-[#141A14] border border-[#27272A] text-white rounded-sm"
+    },
+    "badges": {
+      "style": "px-2 py-0.5 text-xs font-jetbrains uppercase tracking-widest border rounded-sm"
+    }
+  },
+  "animations": {
+    "interactions": "Micro-interactions for feedback. Rapid transitions (0.15s ease) for a snappy, tactical gaming feel. No slow floating animations."
+  },
+  "media": {
+    "logo_veterans": "https://customer-assets.emergentagent.com/job_183fbcf6-2b8d-4bff-857a-0cf7cfa0f90b/artifacts/44shq5ox_595A0255-6E8F-4C93-A583-363C23377EF4.jpg",
+    "logo_eva": "https://customer-assets.emergentagent.com/job_183fbcf6-2b8d-4bff-857a-0cf7cfa0f90b/artifacts/ap2rfdh2_evagg_logo.jpg",
+    "background_login": "https://static.prod-images.emergentagent.com/jobs/183fbcf6-2b8d-4bff-857a-0cf7cfa0f90b/images/72a6bf0651078a9eb959316a07d3571561780276525b7d91d6c531ec2cec0683.png"
+  },
+  "testing": {
+    "data_testid_conventions": "Kebab-case, role-based. Examples: 'login-submit-button', 'planning-cell-mon-0040', 'availability-dropdown', 'logout-button', 'eva-pass-table'."
+  },
+  "instructions_to_main_agent": [
+    "Build a React/Firebase dashboard tailored for an esports team. Login page must feature the 'background_login' image with a heavy dark overlay (bg-black/60) and center the 'logo_veterans'.",
+    "Install and import 'Rajdhani', 'Chivo', and 'JetBrains Mono' from Google Fonts or fontsource.",
+    "Implement 3 primary routes post-login: 1. Planning (Admin Only Edit), 2. Disponibilit\u00e9 (User Edit), 3. Eva Pass (Data Table).",
+    "Grid Implementation is Critical: Create a 36-row x 7-column grid structure for both Planning and Availability. Ensure columns map to Mon-Sun. Rows correspond to 40-minute slots starting from 00:00. Use fixed headers for days and a fixed left column for time labels.",
+    "For Planning Cells: Create a dropdown or click-to-edit modal for Admins allowing them to select 1 of the 7 session types. The cell background and border must perfectly reflect the selected 'semantic.planning_sessions' styling.",
+    "For Availability Cells: Allow users to toggle between 'Disponible', 'Indisponible', and 'Incertain'. Unfilled states should remain blank dark cells. Use the defined 'semantic.availability' stylings.",
+    "For Eva Pass Page: Build a dense data table using Shadcn Table component. Show user name, tokens remaining, and next reset date. Ensure table rows use hover effects (hover:bg-[#1B221B]).",
+    "Use Phosphor Icons or Lucide React for UI adornments (e.g., arrow keys for week navigation, logout icon, user avatar).",
+    "All interactive inputs, buttons, and grid cells MUST have corresponding `data-testid` attributes."
+  ]
+}
