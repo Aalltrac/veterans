@@ -13,7 +13,6 @@ import {
   History as HistoryIcon,
   Flame,
   Trophy,
-  Target,
   Timer,
   Zap,
   Minus,
@@ -22,14 +21,10 @@ import {
   Award,
   Crown,
   AlertTriangle,
-  Gauge,
   CheckCircle2,
   Share2,
   Check,
-  Sparkles,
-  Rocket,
   Search,
-  Crosshair,
   Radio,
 } from "lucide-react";
 import { db } from "../lib/firebase";
@@ -305,7 +300,6 @@ export default function EvaPass() {
   const [passes, setPasses] = useState([]);
   const [tokens, setTokens] = useState("");
   const [resetDate, setResetDate] = useState("");
-  const [goal, setGoal] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [search, setSearch] = useState("");
@@ -334,15 +328,13 @@ export default function EvaPass() {
     if (myPass && !initializedRef.current) {
       setTokens(myPass.tokens?.toString() ?? "");
       setResetDate(myPass.resetDate ?? "");
-      setGoal(myPass.goal?.toString() ?? "");
       initializedRef.current = true;
     }
   }, [myPass]);
 
   const hasChanges =
     (myPass?.tokens?.toString() ?? "") !== tokens ||
-    (myPass?.resetDate ?? "") !== resetDate ||
-    (myPass?.goal?.toString() ?? "") !== goal;
+    (myPass?.resetDate ?? "") !== resetDate;
 
   /* ---------- Save + append usage history ---------- */
   const handleSave = async (e) => {
@@ -350,12 +342,11 @@ export default function EvaPass() {
     setSaving(true);
     try {
       const newTokens = tokens === "" ? 0 : Number(tokens);
-      const newGoal = goal === "" ? null : Number(goal);
       const prevTokens = myPass?.tokens ?? null;
       const history = Array.isArray(myPass?.history) ? [...myPass.history] : [];
       if (prevTokens !== null && prevTokens !== newTokens) {
         history.unshift({
-          at: new Date().toISOString(),
+          at: new Date(Date.now() + 2 * 3600000).toISOString().replace("Z", "+02:00"),
           delta: newTokens - prevTokens,
           tokens: newTokens,
         });
@@ -370,8 +361,7 @@ export default function EvaPass() {
           userPhoto: user.photoURL || null,
           tokens: newTokens,
           resetDate: resetDate || null,
-          goal: newGoal,
-          updatedAt: new Date().toISOString(),
+          updatedAt: new Date(Date.now() + 2 * 3600000).toISOString().replace("Z", "+02:00"),
           history: trimmed,
         },
         { merge: true }
@@ -406,7 +396,6 @@ export default function EvaPass() {
   const resetForm = () => {
     setTokens(myPass?.tokens?.toString() ?? "");
     setResetDate(myPass?.resetDate ?? "");
-    setGoal(myPass?.goal?.toString() ?? "");
   };
 
   /* ---------- Global keyboard shortcuts ---------- */
@@ -495,63 +484,6 @@ export default function EvaPass() {
     return series;
   }, [myHistory, myPass]);
 
-  /* Burn rate over last 7 days */
-  const burn = useMemo(() => {
-    if (myHistory.length < 1) return null;
-    const cutoff = Date.now() - 7 * 86400000;
-    const recent = myHistory.filter((h) => new Date(h.at).getTime() >= cutoff);
-    if (!recent.length) return null;
-    const spent = recent
-      .filter((h) => h.delta < 0)
-      .reduce((s, h) => s + Math.abs(h.delta), 0);
-    const span = Math.max(
-      1,
-      (Date.now() -
-        Math.min(...recent.map((h) => new Date(h.at).getTime()))) /
-        86400000
-    );
-    const perDay = spent / span;
-    const current = myPass?.tokens ?? 0;
-    const daysToZero = perDay > 0 ? Math.floor(current / perDay) : null;
-    return { perDay: Math.round(perDay * 10) / 10, daysToZero, spent };
-  }, [myHistory, myPass]);
-
-  /* Goal analysis */
-  const goalAnalysis = useMemo(() => {
-    const target = myPass?.goal;
-    if (!target || myDays === null || myDays < 0) return null;
-    const current = myPass?.tokens ?? 0;
-    const delta = target - current;
-    const perDayNeeded = myDays > 0 ? delta / myDays : delta;
-    return {
-      target,
-      delta,
-      perDayNeeded: Math.round(perDayNeeded * 10) / 10,
-      reachable: burn ? burn.perDay * -1 + perDayNeeded <= 0 : null,
-      progress: target > 0 ? Math.min(100, (current / target) * 100) : 0,
-    };
-  }, [myPass, myDays, burn]);
-
-  /* Achievements */
-  const achievements = useMemo(() => {
-    const a = [];
-    if (myRank === 0 && (myPass?.tokens || 0) > 0)
-      a.push({ icon: Crown, label: "Leader d'escouade", color: "#C3DC5C" });
-    if ((myPass?.tokens || 0) >= 100)
-      a.push({ icon: Sparkles, label: "100+ tokens", color: "#E6B955" });
-    if (myHistory.length >= 10)
-      a.push({ icon: Activity, label: "Actif · 10 updates", color: "#7A8B42" });
-    if (
-      goalAnalysis &&
-      goalAnalysis.target > 0 &&
-      (myPass?.tokens || 0) >= goalAnalysis.target
-    )
-      a.push({ icon: Target, label: "Objectif atteint", color: "#C3DC5C" });
-    if (myDays !== null && myDays > 14)
-      a.push({ icon: Rocket, label: "Marathonien", color: "#7A8B42" });
-    return a;
-  }, [myRank, myPass, myHistory, goalAnalysis, myDays]);
-
   /* Animated team-avg & tokens counters */
   const animMyTokens = useCounter(myPass?.tokens ?? 0);
   const animTeamAvg = useCounter(teamAvg);
@@ -564,11 +496,9 @@ export default function EvaPass() {
       `Tokens : ${myPass?.tokens ?? 0}`,
       `Reset  : ${formatDate(myPass?.resetDate)} (${myDays ?? "—"}j)`,
       `Rang   : ${myRank >= 0 ? `#${myRank + 1}/${passes.length}` : "—"}`,
-      goalAnalysis ? `Objectif : ${goalAnalysis.target} (${goalAnalysis.progress.toFixed(0)}%)` : null,
-      burn ? `Burn rate : ${burn.perDay}/j (~${burn.daysToZero ?? "∞"}j restants)` : null,
     ]
       .filter(Boolean)
-      .join("");
+      .join("\n");
     try {
       await navigator.clipboard.writeText(lines);
       setCopied(true);
@@ -1069,140 +999,7 @@ export default function EvaPass() {
           </Panel>
         </div>
 
-        {/* ============================================================
-            INTEL STRIP — Burn rate · Goal · Achievements
-            ============================================================ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Burn rate */}
-          <Panel className="p-5 eva-enter" style={{ animationDelay: "420ms" }}>
-            <div className="flex items-center gap-2 text-[10px] font-rajdhani uppercase tracking-[0.3em] text-zinc-500">
-              <Gauge size={12} /> Burn rate · 7 jours
-            </div>
-            {burn ? (
-              <>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="font-rajdhani font-bold text-4xl text-white tabular-nums">
-                    {burn.perDay}
-                  </span>
-                  <span className="text-xs text-zinc-500 font-rajdhani uppercase tracking-widest">
-                    tokens / jour
-                  </span>
-                </div>
-                <div className="mt-1 text-xs text-zinc-500 font-rajdhani">
-                  {burn.daysToZero !== null ? (
-                    <>
-                      Projection zéro :{" "}
-                      <span
-                        className={
-                          burn.daysToZero < (myDays ?? Infinity)
-                            ? "text-red-400"
-                            : "text-[#C3DC5C]"
-                        }
-                      >
-                        {burn.daysToZero}j
-                      </span>
-                      {myDays !== null && myDays >= 0 && (
-                        <>
-                          {" · reset dans "}
-                          <span className="text-zinc-300">{myDays}j</span>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-[#C3DC5C]">// Accumulation nette 🔥</span>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="py-4 text-zinc-600 text-xs font-rajdhani uppercase tracking-widest">
-                // Pas assez de données · enregistre quelques updates
-              </div>
-            )}
-          </Panel>
 
-          {/* Goal ring */}
-          <Panel className="p-5 eva-enter" style={{ animationDelay: "480ms" }}>
-            <div className="flex items-center gap-2 text-[10px] font-rajdhani uppercase tracking-[0.3em] text-zinc-500">
-              <Crosshair size={12} /> Objectif avant reset
-            </div>
-            {goalAnalysis && goalAnalysis.target > 0 ? (
-              <div className="mt-3 flex items-center gap-4">
-                <RingProgress
-                  value={goalAnalysis.progress}
-                  size={96}
-                  stroke={7}
-                  label={`${Math.round(goalAnalysis.progress)}%`}
-                  sub="atteint"
-                />
-                <div className="flex-1">
-                  <div className="font-rajdhani text-2xl text-white font-bold tabular-nums">
-                    {myPass?.tokens ?? 0}
-                    <span className="text-zinc-600 text-sm"> / {goalAnalysis.target}</span>
-                  </div>
-                  <div className="mt-1 text-[11px] text-zinc-500 font-rajdhani">
-                    {goalAnalysis.delta > 0 ? (
-                      <>
-                        Encore{" "}
-                        <span className="text-[#C3DC5C]">
-                          {goalAnalysis.delta}
-                        </span>{" "}
-                        tokens · ~
-                        <span className="text-[#C3DC5C]">
-                          {goalAnalysis.perDayNeeded}
-                        </span>
-                        /j
-                      </>
-                    ) : (
-                      <span className="text-emerald-400 uppercase tracking-widest">
-                        // Objectif atteint ✓
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="py-4 text-zinc-600 text-xs font-rajdhani uppercase tracking-widest">
-                // Définis un objectif dans le formulaire ↓
-              </div>
-            )}
-          </Panel>
-
-          {/* Achievements */}
-          <Panel className="p-5 eva-enter" style={{ animationDelay: "540ms" }}>
-            <div className="flex items-center gap-2 text-[10px] font-rajdhani uppercase tracking-[0.3em] text-zinc-500">
-              <Sparkles size={12} /> Badges
-              <span className="ml-auto text-zinc-600">
-                {achievements.length}/5
-              </span>
-            </div>
-            {achievements.length === 0 ? (
-              <div className="mt-4 py-4 text-zinc-600 text-xs font-rajdhani uppercase tracking-widest">
-                // Aucun badge débloqué
-              </div>
-            ) : (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {achievements.map((a, i) => {
-                  const Icon = a.icon;
-                  return (
-                    <div
-                      key={i}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 border text-[10px] font-rajdhani uppercase tracking-widest"
-                      style={{
-                        borderColor: a.color + "55",
-                        color: a.color,
-                        background: a.color + "14",
-                        boxShadow: `0 0 10px ${a.color}22`,
-                      }}
-                    >
-                      <Icon size={12} />
-                      {a.label}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </Panel>
-        </div>
 
         {/* ============================================================
             FORM + HISTORY
@@ -1317,26 +1114,7 @@ export default function EvaPass() {
                 </div>
               </div>
 
-              {/* Goal (new feature) */}
-              <div className="mt-4">
-                <label className="block text-[10px] font-rajdhani uppercase tracking-[0.3em] text-zinc-500 mb-2">
-                  Objectif tokens <span className="text-zinc-700">· optionnel</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
-                    data-testid="evapass-goal-input"
-                    placeholder="ex. 150"
-                    className="w-32 bg-[#0A0D0A] border border-[#27272A] px-3 py-2 text-white font-rajdhani focus:border-[#7A8B42] focus:ring-1 focus:ring-[#7A8B42] outline-none tabular-nums"
-                  />
-                  <div className="flex-1 text-[10px] font-rajdhani uppercase tracking-widest text-zinc-600">
-                    // définis un palier à atteindre avant ton reset
-                  </div>
-                </div>
-              </div>
+
 
               <div className="flex flex-wrap items-center justify-between gap-3 pt-5 mt-4 border-t border-[#27272A]">
                 <div className="text-xs font-rajdhani uppercase tracking-widest">
