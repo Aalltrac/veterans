@@ -1,13 +1,11 @@
 {
-  \"$schema\": \"https://openapi.vercel.sh/vercel.json\",
-  \"buildCommand\": \"cd frontend && yarn install && yarn build\",
-  \"outputDirectory\": \"frontend/build\",
-  \"installCommand\": \"echo 'skip root install'\",
-  \"framework\": null,
-  \"rewrites\": [
+  "buildCommand": "yarn --cwd frontend install && yarn --cwd frontend build",
+  "outputDirectory": "frontend/build",
+  "installCommand": "echo 'skip'",
+  "rewrites": [
     {
-      \"source\": \"/(.*)\",
-      \"destination\": \"/index.html\"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
