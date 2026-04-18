@@ -1,0 +1,70 @@
+@import url(\"https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Chivo:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap\");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  background-color: #0a0d0a;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  font-family: \"Chivo\", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-rajdhani {
+  font-family: \"Rajdhani\", sans-serif;
+}
+.font-chivo {
+  font-family: \"Chivo\", sans-serif;
+}
+.font-jetbrains {
+  font-family: \"JetBrains Mono\", monospace;
+}
+
+@layer base {
+  :root {
+    --background: 90 10% 4%;
+    --foreground: 0 0% 98%;
+    --card: 120 10% 9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 90 10% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 72 38% 40%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 120 5% 12%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 120 5% 12%;
+    --muted-foreground: 240 3% 54%;
+    --accent: 72 38% 40%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 72 38% 40%;
+    --radius: 0.125rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  [data-debug-wrapper=\"true\"] {
+    display: contents !important;
+  }
+}
