@@ -96,53 +96,6 @@ const useCounter = (target, duration = 900) => {
   return value;
 };
 
-/* Radial progress ring */
-const RingProgress = ({ value = 0, size = 120, stroke = 8, label, sub, color }) => {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const clamp = Math.max(0, Math.min(100, value));
-  const dash = (clamp / 100) * c;
-  const auto = color || (clamp >= 66 ? "#C3DC5C" : clamp >= 33 ? "#E6B955" : "#E67E52");
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="#1B221B"
-          strokeWidth={stroke}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke={auto}
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={`${dash} ${c - dash}`}
-          style={{
-            filter: `drop-shadow(0 0 6px ${auto}aa)`,
-            transition: "stroke-dasharray 0.8s ease, stroke 0.3s ease",
-          }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="font-rajdhani font-bold text-2xl" style={{ color: auto }}>
-          {label}
-        </div>
-        {sub && (
-          <div className="text-[9px] font-rajdhani uppercase tracking-[0.3em] text-zinc-500 mt-0.5">
-            {sub}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 /* Sparkline — SVG mini chart */
 const Sparkline = ({ values = [], width = 120, height = 36, color = "#C3DC5C" }) => {
   if (values.length < 2) {
