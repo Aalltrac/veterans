@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from \"react\";
+import { useEffect, useMemo, useRef, useState } from \"react\";
 import { collection, doc, onSnapshot, setDoc } from \"firebase/firestore\";
 import { Save, Ticket, Calendar as CalIcon } from \"lucide-react\";
 import { db } from \"../lib/firebase\";
@@ -11,6 +11,7 @@ export default function EvaPass() {
   const [resetDate, setResetDate] = useState(\"\");
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, \"evapass\"), (snap) => {
@@ -24,9 +25,10 @@ export default function EvaPass() {
   const myPass = useMemo(() => passes.find((p) => p.userId === user.uid), [passes, user.uid]);
 
   useEffect(() => {
-    if (myPass) {
+    if (myPass && !initializedRef.current) {
       setTokens(myPass.tokens?.toString() || \"\");
       setResetDate(myPass.resetDate || \"\");
+      initializedRef.current = true;
     }
   }, [myPass]);
 
