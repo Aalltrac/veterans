@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from \"react\";
-import { collection, doc, onSnapshot, query, setDoc, where } from \"firebase/firestore\";
-import { ChevronLeft, ChevronRight } from \"lucide-react\";
+import {
+  collection,
+  deleteField,
+  doc,
+  onSnapshot,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from \"firebase/firestore\";
+import { ChevronLeft, ChevronRight, Users, User as UserIcon } from \"lucide-react\";
 import { db } from \"../lib/firebase\";
 import { useAuth } from \"../context/AuthContext\";
 import {
@@ -14,11 +23,13 @@ import {
   formatWeekRange,
 } from \"../lib/timeSlots\";
 
+const TEAM_VIEW = \"__team__\";
+
 export default function Availability() {
   const { user } = useAuth();
   const [monday, setMonday] = useState(getMonday(new Date()));
   const [allDocs, setAllDocs] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState(user.uid);
+  const [selectedUserId, setSelectedUserId] = useState(TEAM_VIEW);
   const [saving, setSaving] = useState(false);
 
   const weekId = useMemo(() => getWeekId(monday), [monday]);
@@ -37,61 +48,90 @@ export default function Availability() {
   // Ensure my own doc exists so I appear in the selector
   useEffect(() => {
     const myId = `${user.uid}_${weekId}`;
-    const ref = doc(db, \"availabilities\", myId);
     setDoc(
-      ref,
+      doc(db, \"availabilities\", myId),
       {
         userId: user.uid,
         userName: user.displayName || user.email,
         userPhoto: user.photoURL || null,
         weekId,
-        slots: {},
       },
       { merge: true }
     ).catch(() => {});
   }, [user, weekId]);
 
-  const currentDoc = useMemo(() => {
-    return allDocs.find((d) => d.userId === selectedUserId) || {
-      userId: selectedUserId,
-      userName: selectedUserId === user.uid ? (user.displayName || user.email) : selectedUserId,
-      slots: {},
-    };
-  }, [allDocs, selectedUserId, user]);
+  const myDoc = useMemo(
+    () =>
+      allDocs.find((d) => d.userId === user.uid) || {
+        userId: user.uid,
+        userName: user.displayName || user.email,
+        userPhoto: user.photoURL,
+        slots: {},
+      },
+    [allDocs, user]
+  );
+
+  const selectedDoc = useMemo(() => {
+    if (selectedUserId === TEAM_VIEW) return null;
+    return allDocs.find((d) => d.userId === selectedUserId) || null;
+  }, [allDocs, selectedUserId]);
+
+  // Team aggregate per slot: { \"mon-0\": { disponible: n, indisponible: n, incertain: n } }
+  const teamAgg = useMemo(() => {
+    const agg = {};
+    for (const d of allDocs) {
+      const slots = d.slots || {};
+      for (const [key, v] of Object.entries(slots)) {
+        if (!agg[key]) agg[key] = { disponible: 0, indisponible: 0, incertain: 0, users: [] };
+        if (agg[key][v] !== undefined) agg[key][v] += 1;
+        agg[key].users.push({ name: d.userName, state: v });
+      }
+    }
+    return agg;
+  }, [allDocs]);
 
   const cycleState = async (dayKey, slotIndex) => {
-    if (selectedUserId !== user.uid) return; // only edit own
     const key = getCellKey(dayKey, slotIndex);
-    const current = currentDoc.slots?.[key];
-    const order = [null, \"disponible\", \"indisponible\", \"incertain\"];
-    const next = order[(order.indexOf(current ?? null) + 1) % order.length];
+    const current = myDoc.slots?.[key]; // undefined | \"disponible\" | \"indisponible\" | \"incertain\"
+    const order = [undefined, \"disponible\", \"indisponible\", \"incertain\"];
+    const idx = order.indexOf(current);
+    const next = order[(idx === -1 ? 0 : idx + 1) % order.length];
 
     setSaving(true);
-    const newSlots = { ...(currentDoc.slots || {}) };
-    if (next === null) delete newSlots[key];
-    else newSlots[key] = next;
-
+    const ref = doc(db, \"availabilities\", `${user.uid}_${weekId}`);
     try {
+      // ensure the doc exists (idempotent)
       await setDoc(
-        doc(db, \"availabilities\", `${user.uid}_${weekId}`),
+        ref,
         {
           userId: user.uid,
           userName: user.displayName || user.email,
           userPhoto: user.photoURL || null,
           weekId,
-          slots: newSlots,
           updatedAt: new Date().toISOString(),
         },
         { merge: true }
       );
+      if (next === undefined) {
+        await updateDoc(ref, { [`slots.${key}`]: deleteField() });
+      } else {
+        await updateDoc(ref, { [`slots.${key}`]: next });
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  const getState = (key) => AVAILABILITY_STATES.find((s) => s.key === key);
+  const getState = (k) => AVAILABILITY_STATES.find((s) => s.key === k);
 
-  const isOwn = selectedUserId === user.uid;
+  const isTeamView = selectedUserId === TEAM_VIEW;
+  const isOwnView = selectedUserId === user.uid;
+
+  // Sorted list of users for tabs (me first)
+  const userList = useMemo(() => {
+    const others = allDocs.filter((d) => d.userId !== user.uid);
+    return [myDoc, ...others];
+  }, [allDocs, myDoc, user.uid]);
 
   return (
     <div className=\"space-y-6\" data-testid=\"availability-page\">
@@ -104,7 +144,7 @@ export default function Availability() {
             Disponibilités
           </h1>
           <p className=\"text-zinc-500 text-sm mt-1\">
-            Cliquez sur un créneau pour cycler: Disponible → Indisponible → Incertain → Vide
+            Cliquez sur votre grille pour cycler : Disponible → Indisponible → Incertain → Vide
           </p>
         </div>
 
@@ -134,9 +174,32 @@ export default function Availability() {
         </div>
       </div>
 
-      {/* user selector */}
+      {/* View selector */}
       <div className=\"flex flex-wrap gap-2\" data-testid=\"user-selector\">
-        {[{ userId: user.uid, userName: user.displayName || user.email, userPhoto: user.photoURL }, ...allDocs.filter((d) => d.userId !== user.uid)]
+        <button
+          onClick={() => setSelectedUserId(TEAM_VIEW)}
+          data-testid=\"view-team\"
+          className={`flex items-center gap-2 px-3 py-2 border font-rajdhani uppercase tracking-wider text-xs transition-all ${
+            isTeamView
+              ? \"bg-[#7A8B42]/20 border-[#7A8B42]/70 text-[#C3DC5C] shadow-[0_0_15px_rgba(122,139,66,0.25)]\"
+              : \"border-[#27272A] text-zinc-400 hover:text-white hover:border-[#52525B]\"
+          }`}
+        >
+          <Users size={14} /> Vue équipe ({allDocs.length})
+        </button>
+        <button
+          onClick={() => setSelectedUserId(user.uid)}
+          data-testid=\"view-me\"
+          className={`flex items-center gap-2 px-3 py-2 border font-rajdhani uppercase tracking-wider text-xs transition-all ${
+            isOwnView
+              ? \"bg-[#7A8B42]/20 border-[#7A8B42]/70 text-[#C3DC5C] shadow-[0_0_15px_rgba(122,139,66,0.25)]\"
+              : \"border-[#27272A] text-zinc-400 hover:text-white hover:border-[#52525B]\"
+          }`}
+        >
+          <UserIcon size={14} /> Mes dispos
+        </button>
+        {userList
+          .filter((d) => d.userId !== user.uid)
           .map((d) => {
             const active = selectedUserId === d.userId;
             return (
@@ -146,7 +209,7 @@ export default function Availability() {
                 data-testid={`user-tab-${d.userId}`}
                 className={`flex items-center gap-2 px-3 py-2 border font-rajdhani uppercase tracking-wider text-xs transition-all ${
                   active
-                    ? \"bg-[#7A8B42]/15 border-[#7A8B42]/60 text-[#C3DC5C] shadow-[0_0_15px_rgba(122,139,66,0.2)]\"
+                    ? \"bg-[#7A8B42]/20 border-[#7A8B42]/70 text-[#C3DC5C] shadow-[0_0_15px_rgba(122,139,66,0.25)]\"
                     : \"border-[#27272A] text-zinc-400 hover:text-white hover:border-[#52525B]\"
                 }`}
               >
@@ -158,9 +221,6 @@ export default function Availability() {
                   </div>
                 )}
                 <span className=\"max-w-[120px] truncate\">{d.userName}</span>
-                {d.userId === user.uid && (
-                  <span className=\"text-[9px] text-[#7A8B42]\">(moi)</span>
-                )}
               </button>
             );
           })}
@@ -178,13 +238,26 @@ export default function Availability() {
         ))}
       </div>
 
-      {!isOwn && (
+      {isTeamView && (
         <div className=\"text-xs text-zinc-400 border border-[#27272A] bg-[#141A14] px-3 py-2 font-jetbrains uppercase tracking-wider\">
-          Consultation — {currentDoc.userName}
+          Vue agrégée — survolez une case pour voir les joueurs
+        </div>
+      )}
+      {!isTeamView && !isOwnView && selectedDoc && (
+        <div className=\"text-xs text-zinc-400 border border-[#27272A] bg-[#141A14] px-3 py-2 font-jetbrains uppercase tracking-wider\">
+          Consultation — {selectedDoc.userName}
+        </div>
+      )}
+      {isOwnView && (
+        <div className=\"text-xs text-[#C3DC5C] border border-[#7A8B42]/40 bg-[#7A8B42]/10 px-3 py-2 font-jetbrains uppercase tracking-wider\">
+          Mode édition — cliquez sur les cases pour modifier vos dispos
         </div>
       )}
 
-      <div className=\"border border-[#27272A] bg-[#0A0D0A] overflow-auto max-h-[calc(100vh-360px)]\" data-testid=\"availability-grid\">
+      <div
+        className=\"border border-[#27272A] bg-[#0A0D0A] overflow-auto max-h-[calc(100vh-380px)]\"
+        data-testid=\"availability-grid\"
+      >
         <table className=\"w-full border-collapse\">
           <thead>
             <tr>
@@ -217,7 +290,51 @@ export default function Availability() {
                 </td>
                 {DAYS.map((d) => {
                   const key = getCellKey(d.key, slot.index);
-                  const stateKey = currentDoc.slots?.[key];
+
+                  if (isTeamView) {
+                    const agg = teamAgg[key];
+                    const tooltip = agg?.users
+                      .map((u) => `${u.name}: ${u.state}`)
+                      .join(\"
+\");
+                    return (
+                      <td
+                        key={key}
+                        className=\"border-r border-b border-[#1F2937] p-0.5\"
+                        data-testid={`team-cell-${d.key}-${slot.index}`}
+                      >
+                        <div
+                          title={tooltip || \"Aucune donnée\"}
+                          className=\"w-full min-h-[36px] flex items-center justify-center gap-1 text-[10px] font-jetbrains\"
+                        >
+                          {agg ? (
+                            <>
+                              {agg.disponible > 0 && (
+                                <span className=\"px-1 border border-[#7A8B42]/60 bg-[#7A8B42]/20 text-[#C3DC5C]\">
+                                  ✓{agg.disponible}
+                                </span>
+                              )}
+                              {agg.incertain > 0 && (
+                                <span className=\"px-1 border border-amber-500/60 bg-amber-900/30 text-amber-300\">
+                                  ?{agg.incertain}
+                                </span>
+                              )}
+                              {agg.indisponible > 0 && (
+                                <span className=\"px-1 border border-red-500/60 bg-red-900/30 text-red-300\">
+                                  ✕{agg.indisponible}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className=\"text-zinc-700\">—</span>
+                          )}
+                        </div>
+                      </td>
+                    );
+                  }
+
+                  const doc = isOwnView ? myDoc : selectedDoc;
+                  const stateKey = doc?.slots?.[key];
                   const state = getState(stateKey);
                   return (
                     <td
@@ -226,13 +343,11 @@ export default function Availability() {
                       data-testid={`availability-cell-${d.key}-${slot.index}`}
                     >
                       <button
-                        onClick={() => cycleState(d.key, slot.index)}
-                        disabled={!isOwn || saving}
+                        onClick={() => isOwnView && cycleState(d.key, slot.index)}
+                        disabled={!isOwnView || saving}
                         className={`w-full min-h-[36px] px-2 py-1 text-center transition-all ${
-                          state
-                            ? `${state.classes} border`
-                            : \"bg-transparent hover:bg-[#1B221B] border border-transparent\"
-                        } ${isOwn ? \"cursor-pointer\" : \"cursor-default\"}`}
+                          state ? `${state.classes} border` : \"bg-transparent hover:bg-[#1B221B] border border-transparent\"
+                        } ${isOwnView ? \"cursor-pointer\" : \"cursor-default\"}`}
                       >
                         {state ? (
                           <span className=\"text-[10px] font-jetbrains uppercase tracking-wider\">
