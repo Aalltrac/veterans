@@ -299,9 +299,9 @@ export default function Planning() {
     return { total, byType, capacity, pct, byDay, maxDay };
   }, [slots]);
 
-  const nowHour = clock.getUTCHours();
+  const nowHour = (clock.getUTCHours() + 2) % 24;
   const nowMinutes = clock.getUTCMinutes();
-  const todayKey = DAYS[(clock.getUTCDay() + 6) % 7]?.key;
+  const todayKey = DAYS[((clock.getUTCDay() + 6 + (clock.getUTCHours() + 2 >= 24 ? 1 : 0)) % 7)]?.key;
 
   const onCellClick = (dayKey, slotIndex) => {
     if (!isAdmin) return;
@@ -313,7 +313,7 @@ export default function Planning() {
     handleSetSession(dayKey, slotIndex, target);
   };
 
-  const utcTime = clock.toISOString().slice(11, 19);
+  const utcTime = new Date(clock.getTime() + 2 * 3600 * 1000).toISOString().slice(11, 19);
   const visibleDays = focusDay ? DAYS.filter((d) => d.key === focusDay) : DAYS;
 
   return (
@@ -340,9 +340,7 @@ export default function Planning() {
             <SectionLabel icon={Calendar}>Weekly Operation Plan</SectionLabel>
             <h1 className="font-rajdhani font-bold uppercase tracking-[0.2em] text-3xl sm:text-4xl text-white leading-none mt-2 relative">
               Planning
-              <span className="absolute -right-4 top-1 text-[10px] font-jetbrains text-[#7A8B42] tracking-[0.3em]">
-                v2
-              </span>
+
             </h1>
             <p className="text-zinc-500 text-xs sm:text-sm mt-2 font-jetbrains uppercase tracking-[0.2em]">
               {isAdmin
@@ -442,7 +440,7 @@ export default function Planning() {
 
           <div className="flex items-center justify-end gap-3 font-jetbrains text-[10px] uppercase tracking-[0.25em] text-zinc-500">
             <span className="text-[#7A8B42]" data-testid="planning-clock">
-              UTC {utcTime}
+              UTC+2 {utcTime}
             </span>
             <button
               onClick={() => setCompact((c) => !c)}
@@ -620,7 +618,7 @@ export default function Planning() {
             <thead>
               <tr>
                 <th className="sticky top-0 left-0 z-30 bg-[#141A14] border-r border-b border-[#27272A] w-24 px-2 py-3 text-[10px] font-jetbrains uppercase tracking-[0.3em] text-[#7A8B42]">
-                  UTC
+                  UTC+2
                 </th>
                 {visibleDays.map((d, i) => {
                   const realIndex = DAYS.findIndex((x) => x.key === d.key);
