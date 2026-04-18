@@ -730,7 +730,7 @@ export default function EvaPass() {
           {/* Team avg */}
           <Panel className="p-5 eva-enter" style={{ animationDelay: "180ms" }}>
             <div className="flex items-center gap-2 text-[10px] font-rajdhani uppercase tracking-[0.3em] text-zinc-500">
-              <Target size={12} /> Moyenne équipe
+              <Activity size={12} /> Moyenne équipe
             </div>
             <div className="mt-2 font-rajdhani text-4xl font-bold text-white tabular-nums">
               {animTeamAvg}
