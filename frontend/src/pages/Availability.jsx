@@ -462,14 +462,14 @@ export default function Availability() {
     return [myDoc, ...others];
   }, [allDocs, myDoc, user.uid]);
 
-  /* current UTC day/slot for live indicator */
-  const now = new Date(nowTick);
+  /* current UTC+2 day/slot for live indicator */
+  const now = new Date(nowTick + 2 * 60 * 60 * 1000);
   const todayIdx = DAYS.findIndex((_, i) => {
     const d = addDays(monday, i);
     return d.toDateString() === now.toDateString();
   });
   const currentSlotIndex = useMemo(() => {
-    const h = new Date(nowTick).getUTCHours();
+    const h = new Date(nowTick + 2 * 60 * 60 * 1000).getUTCHours();
     return TIME_SLOTS.findIndex((s) => Number((s.label || "").split(":")[0]) === h);
   }, [nowTick]);
 
