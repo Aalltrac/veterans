@@ -1,5 +1,5 @@
-import { Navigate } from \"react-router-dom\";
-import { useAuth } from \"../context/AuthContext\";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -7,14 +7,14 @@ export default function ProtectedRoute({ children }) {
   if (loading) {
     return (
       <div
-        className=\"min-h-screen flex items-center justify-center bg-[#0A0D0A] text-[#A3C139] font-rajdhani uppercase tracking-widest\"
-        data-testid=\"loading-screen\"
+        className="min-h-screen flex items-center justify-center bg-[#0A0D0A] text-[#A3C139] font-rajdhani uppercase tracking-widest"
+        data-testid="loading-screen"
       >
-        <div className=\"animate-pulse\">Chargement…</div>
+        <div className="animate-pulse">Chargement…</div>
       </div>
     );
   }
 
-  if (!user) return <Navigate to=\"/login\" replace />;
+  if (!user) return <Navigate to="/login" replace />;
   return children;
 }
