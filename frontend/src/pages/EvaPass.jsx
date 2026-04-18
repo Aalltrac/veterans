@@ -149,6 +149,8 @@ const Sparkline = ({ values = [], width = 120, height = 36, color = "#C3DC5C" })
 /* ============================================================
    Helpers
    ============================================================ */
+const TZ = "Europe/Paris";
+
 const formatDate = (s) => {
   if (!s) return "—";
   try {
@@ -156,6 +158,7 @@ const formatDate = (s) => {
       day: "2-digit",
       month: "short",
       year: "numeric",
+      timeZone: TZ,
     });
   } catch {
     return s;
@@ -173,10 +176,11 @@ const formatRelative = (iso) => {
 
 const daysUntil = (s) => {
   if (!s) return null;
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const target = new Date(s);
-  target.setHours(0, 0, 0, 0);
+  // Compare les minuits en heure Paris pour éviter les décalages UTC
+  const toParisDay = (d) =>
+    new Date(d.toLocaleDateString("fr-FR", { timeZone: TZ }).split("/").reverse().join("-"));
+  const now = toParisDay(new Date());
+  const target = toParisDay(new Date(s));
   return Math.round((target - now) / 86400000);
 };
 
@@ -192,7 +196,10 @@ const useCountdown = (isoDate) => {
   }, [isoDate]);
 
   if (!isoDate) return null;
-  const target = new Date(isoDate).getTime();
+  // Interpréter la date comme minuit heure Paris (et non minuit UTC)
+  const parisOffset = new Date(isoDate).toLocaleString("en-US", { timeZone: "Europe/Paris", timeZoneName: "shortOffset" }).match(/GMT([+-]\d+)/)?.[1] || "+2";
+  const offsetHours = parseInt(parisOffset, 10);
+  const target = new Date(isoDate).getTime() - offsetHours * 3600000;
   const diff = target - now;
   const abs = Math.abs(diff);
   return {
@@ -299,7 +306,7 @@ export default function EvaPass() {
       const history = Array.isArray(myPass?.history) ? [...myPass.history] : [];
       if (prevTokens !== null && prevTokens !== newTokens) {
         history.unshift({
-          at: new Date(Date.now() + 2 * 3600000).toISOString().replace("Z", "+02:00"),
+          at: new Date().toISOString(),
           delta: newTokens - prevTokens,
           tokens: newTokens,
         });
@@ -314,7 +321,7 @@ export default function EvaPass() {
           userPhoto: user.photoURL || null,
           tokens: newTokens,
           resetDate: resetDate || null,
-          updatedAt: new Date(Date.now() + 2 * 3600000).toISOString().replace("Z", "+02:00"),
+          updatedAt: new Date().toISOString(),
           history: trimmed,
         },
         { merge: true }
