@@ -204,6 +204,12 @@ export default function Login() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busy, user, cooldown, online]);
 
+  const briefing = useTypewriter(
+    "Authentification requise. Identifiez-vous via Google pour accéder au planning, aux disponibilités et à vos Eva Pass.",
+    16,
+    mounted
+  );
+
   if (!loading && user) return <Navigate to="/planning" replace />;
 
   const handleLogin = async () => {
@@ -242,12 +248,6 @@ export default function Login() {
 
   const utcTime = clock.toISOString().slice(11, 19);
   const utcDate = clock.toISOString().slice(0, 10);
-
-  const briefing = useTypewriter(
-    "Authentification requise. Identifiez-vous via Google pour accéder au planning, aux disponibilités et à vos Eva Pass.",
-    16,
-    mounted
-  );
 
   const steps = ["Idle", "Handshake", "Token", "Granted"];
 
