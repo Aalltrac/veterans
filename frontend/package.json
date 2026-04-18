@@ -54,7 +54,8 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
     "zod": "^3.24.4",
-    "firebase": "^11.0.0"
+    "firebase": "^11.0.0",
+    "eslint-plugin-react-hooks": "5.2.0"
   },
   "scripts": {
     "start": "craco start",
@@ -73,6 +74,12 @@
       "last 1 safari version"
     ]
   },
+  "eslintConfig": {
+  "extends": ["react-app"],
+  "rules": {
+    "react-hooks/exhaustive-deps": "warn"
+  }
+},
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@craco/craco": "^7.1.0",
