@@ -1,0 +1,8 @@
+{
+  "short_name": "Vétérans",
+  "name": "Les Vétérans · Command Center",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0a0d0a",
+  "background_color": "#0a0d0a"
+}
