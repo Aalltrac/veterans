@@ -77,7 +77,7 @@
   "eslintConfig": {
     "extends": ["react-app", "react-app/jest"],
     "rules": {
-      "react-hooks/exhaustive-deps": "warn"
+      "react-hooks/exhaustive-deps": "warn",
       "react/jsx-no-comment-textnodes": "off"
     }
   },
